@@ -1,0 +1,5 @@
+version: '3'
+
+env:
+  DATABASE_URL: postgres://postgres:060216@localhost:5432/cowlist
+  POSTGRES_PASSWORD: 060216
