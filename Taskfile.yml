@@ -3,8 +3,12 @@ version: '3'
 tasks:
   start:
     env:
-      DATABASE_URL: postgres://postgres:060216@localhost:5432/cowlist
-      POSTGRES_PASSWORD: 060216
+      DATABASE_URL: postgres://postgres:password@localhost:5432/cowlist
+      POSTGRES_PASSWORD: password
     cmds:
       - docker compose up -d
       - go run cmd/main.go
+  restart:
+    cmds:
+      - docker compose down
+      - task start

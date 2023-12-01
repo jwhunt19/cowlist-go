@@ -4,8 +4,8 @@ services:
     container_name: psql
     image: postgres
     environment:
-      POSTGRES_DB: "cowlist"
+      POSTGRES_DB: cowlist
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 060216
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
