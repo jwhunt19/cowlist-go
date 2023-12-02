@@ -57,6 +57,9 @@ func main() {
 	http.HandleFunc("/getallcows", func(w http.ResponseWriter, r *http.Request) {
 		server.GetAllCows(w, r, conn)
 	})
+	http.HandleFunc("/updatecow", func(w http.ResponseWriter, r *http.Request) {
+		server.UpdateCow(w, r, conn)
+	})
 
 	// listen on port 8080
 	http.ListenAndServe(":8080", nil)
