@@ -2,3 +2,13 @@
   background-color: #282A37;
   color: white
 }
+
+.cow p {
+  padding: 0;
+  margin: 2px;
+  font-weight: bold;
+}
+
+.cow h2 {
+  margin: 0;
+}

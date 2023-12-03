@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -49,7 +50,7 @@ func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	defer cancel()
 
 	// run a query to get all cows against the database
-	rows, err := conn.Query(ctx, "select * from cows")
+	rows, err := conn.Query(ctx, "select * from cows order by id")
 	if err != nil {
 		fmt.Printf("Query error: %v", err)
 		return
@@ -76,10 +77,6 @@ func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 		// append this cow to the cows slice
 		cows = append(cows, cow{Id: id, Name: name, Age: age, Color: color, Healthy: healthy})
-
-		// todo - sort cows by id. when updating cows in front end, updated cow moves
-		// to bottom. I think sorting it here should fix it. If not, sort it in the
-		// getCows() function in react.
 	}
 
 	// handle any error from interating the rows?
@@ -143,4 +140,34 @@ func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 	// printing received data - todo delete
 	fmt.Fprintf(w, "Received: %s, %s, %s, %s, %s", name, age, color, healthy, id)
+}
+
+// delete cow func
+func DeleteCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+	enableCors(&w)
+
+	// checks if request is expected method - for some reason it hits twice
+	// and this stops it
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// create context
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	// convert url to string, get id (numbers after last /)
+	url := string(r.URL.Path)
+	lastSlash := strings.LastIndex(url, "/")
+	id := url[lastSlash+1:]
+
+	// write query
+	query := fmt.Sprintf("delete from cows where id = %s", id)
+
+	// execute query
+	_, err := conn.Exec(ctx, query)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
 }

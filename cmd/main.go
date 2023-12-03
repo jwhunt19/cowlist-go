@@ -16,7 +16,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	// assign database url to variable 
+	// assign database url to variable
 	url := os.Getenv("DATABASE_URL")
 	fmt.Println(url)
 
@@ -60,16 +60,19 @@ func main() {
 	http.HandleFunc("/updatecow", func(w http.ResponseWriter, r *http.Request) {
 		server.UpdateCow(w, r, conn)
 	})
+	http.HandleFunc("/deletecow/", func(w http.ResponseWriter, r *http.Request) {
+		server.DeleteCow(w, r, conn)
+	})
 
 	// listen on port 8080
 	http.ListenAndServe(":8080", nil)
 
 	/*
-			=========================
-			Test query - todo: delete
-			=========================
+		=========================
+		Test query - todo: delete
+		=========================
 	*/
-	
+
 	rows, err := conn.Query(ctx, "select * from cows")
 	if err != nil {
 		fmt.Printf("Query error: %v", err)
@@ -102,7 +105,7 @@ func main() {
 	}
 
 	/*
-			Test query end
+		Test query end
 	*/
 
 }

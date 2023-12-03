@@ -6,19 +6,30 @@ import Cowlist from "./components/Cowlist.js";
 function App() {
   const [cows, setCows] = useState([]);
 
+  // get all cows from database
   const getCows = async () => {
     const { data } = await axios.get("http://localhost:8080/getallcows", {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
     });
+
+    // if cows is null, set to empty array
+    if (data === null) {
+      setCows([]);
+      return;
+    }
+
+    // set cows to data
     setCows(data);
   };
 
+  // get all cows from database on page load
   useEffect(() => {
     getCows();
   }, []);
 
+  // update cow in database
   const updateCow = async (cow) => {
     try {
       const { data } = await axios.put(
@@ -38,12 +49,32 @@ function App() {
       );
 
       getCows();
-      console.log(data);
+      console.log(data); // todo delete
     } catch (error) {
       console.log("Error!!: ", error);
     }
   };
 
+  // delete cow from database
+  const deleteCow = async (id) => {
+    try {
+      const { data } = await axios.delete(
+        `http://localhost:8080/deletecow/${id}`,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      getCows();
+      console.log(data); // todo delete
+    } catch (error) {
+      console.log("Error!!: ", error);
+    }
+  }
+
+  // test api
   const test = async () => {
     const { data } = await axios.get("http://localhost:8080/getallcows", {
       headers: {
@@ -78,7 +109,7 @@ function App() {
   return (
     <div className="App">
       <h1>Cowlist</h1>
-      <Cowlist updateCow={updateCow} cows={cows} />
+      <Cowlist updateCow={updateCow} deleteCow={deleteCow} cows={cows} />
       <button onClick={test}>Test API</button>
     </div>
   );

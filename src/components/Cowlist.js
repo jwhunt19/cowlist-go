@@ -1,10 +1,10 @@
 import Cow from './Cow';
 
-const Cowlist = ({ updateCow, cows }) => {
+const Cowlist = ({ updateCow, deleteCow, cows }) => {
   return (
     <div>
       {cows.map((cow) => (
-        <Cow updateCow={updateCow} cow={cow} key={cow.Id} />
+        <Cow updateCow={updateCow} deleteCow={deleteCow} cow={cow} key={cow.Id} />
       ))}
     </div>
   );
