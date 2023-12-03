@@ -53,7 +53,9 @@ func main() {
 	}
 
 	// handle routes
-	http.HandleFunc("/addcow", server.AddCow)
+	http.HandleFunc("/addcow", func(w http.ResponseWriter, r *http.Request) {
+		server.AddCow(w, r, conn)
+	})
 	http.HandleFunc("/getallcows", func(w http.ResponseWriter, r *http.Request) {
 		server.GetAllCows(w, r, conn)
 	})

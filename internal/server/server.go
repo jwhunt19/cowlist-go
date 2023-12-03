@@ -25,23 +25,44 @@ func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 
-func AddCow(w http.ResponseWriter, r *http.Request) {
+// add new cow to database
+func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	enableCors(&w)
 
+	// checks if request is expected method
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// parses form, not really sure what that means
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Error parsing the form", http.StatusBadRequest)
 		return
 	}
 
-	name := r.FormValue("name")
-	age := r.FormValue("age")
-	color := r.FormValue("color")
-	healthy := r.FormValue("healthy")
+	// create context
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
 
-	fmt.Fprintf(w, "Received: %s, %s, %s, %s", name, age, color, healthy)
+	// set values to variables
+	name := r.FormValue("Name")
+	age := r.FormValue("Age")
+	color := r.FormValue("Color")
+	healthy := r.FormValue("Healthy")
+
+	// create update query with variables
+	query := fmt.Sprintf("INSERT INTO cows (name, age, color, healthy) VALUES ('%s', %s, '%s', %s);", name, age, color, healthy)
+
+	// execute query
+	_, err = conn.Exec(ctx, query)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
 }
 
+// return all cows in database
 func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	enableCors(&w)
 
@@ -102,6 +123,7 @@ func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	}
 }
 
+// update cow func
 func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	enableCors(&w)
 
@@ -137,9 +159,6 @@ func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-
-	// printing received data - todo delete
-	fmt.Fprintf(w, "Received: %s, %s, %s, %s, %s", name, age, color, healthy, id)
 }
 
 // delete cow func

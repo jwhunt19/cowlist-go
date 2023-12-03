@@ -2,6 +2,7 @@ import "./App.css";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Cowlist from "./components/Cowlist.js";
+import AddCow from "./components/AddCow.js";
 
 function App() {
   const [cows, setCows] = useState([]);
@@ -68,49 +69,42 @@ function App() {
       );
 
       getCows();
-      console.log(data); // todo delete
+      console.log(data);
     } catch (error) {
       console.log("Error!!: ", error);
     }
-  }
+  };
 
-  // test api
-  const test = async () => {
-    const { data } = await axios.get("http://localhost:8080/getallcows", {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-
-    console.log(data);
-    // axios
-    //   .post(
-    //     "http://localhost:8080/addcow",
-    //     {
-    //       name: "Miltank",
-    //       age: 24,
-    //       color: "Pink",
-    //       healthy: true,
-    //     },
-    //     {
-    //       headers: {
-    //         "Content-Type": "application/x-www-form-urlencoded",
-    //       },
-    //     }
-    //   )
-    //   .then(function (response) {
-    //     console.log(response.data);
-    //   })
-    //   .catch(function (error) {
-    //     console.log(error);
-    //   });
+  // add cow to database
+  const addCow = (cow) => {
+    axios
+      .post(
+        "http://localhost:8080/addcow",
+        {
+          Name: cow.Name,
+          Age: cow.Age,
+          Color: cow.Color,
+          Healthy: cow.Healthy,
+        },
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      )
+      .then(() => {
+        getCows();
+      })
+      .catch((err) => {
+        console.log("Error!!: ", err);
+      });
   };
 
   return (
     <div className="App">
       <h1>Cowlist</h1>
+      <AddCow addCow={addCow} />
       <Cowlist updateCow={updateCow} deleteCow={deleteCow} cows={cows} />
-      <button onClick={test}>Test API</button>
     </div>
   );
 }
