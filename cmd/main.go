@@ -21,7 +21,7 @@ func main() {
 	fmt.Println(url)
 
 	// connect to database
-	conn, err := pgx.Connect(ctx, url)
+	conn, err := pgx.Connect(ctx, url) // todo - move to database directory
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +29,7 @@ func main() {
 
 	// setup schema and initial data
 	_, err = conn.Exec(ctx, `
-	CREATE TABLE cows (
+	CREATE TABLE if not exists cows (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(50),
 		age INTEGER,
@@ -52,24 +52,23 @@ func main() {
 		return
 	}
 
-	// handle routes
-	http.HandleFunc("/addcow", func(w http.ResponseWriter, r *http.Request) {
+	// handle routes - todo - move to server.go
+	http.Handle("/addcow", server.EnableCors(func(w http.ResponseWriter, r *http.Request) {
 		server.AddCow(w, r, conn)
-	})
+	}))
 
-	http.HandleFunc("/getallcows", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/getallcows", server.EnableCors(func(w http.ResponseWriter, r *http.Request) {
 		server.GetAllCows(w, r, conn)
-	})
+	}))
 
-	http.HandleFunc("/updatecow", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/updatecow", server.EnableCors(func(w http.ResponseWriter, r *http.Request) {
 		server.UpdateCow(w, r, conn)
-	})
+	}))
 
-	http.HandleFunc("/deletecow/", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/deletecow/", server.EnableCors(func(w http.ResponseWriter, r *http.Request) {
 		server.DeleteCow(w, r, conn)
-	})
+	}))
 
 	// listen on port 8080
 	http.ListenAndServe(":8080", nil)
-
 }

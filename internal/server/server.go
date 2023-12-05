@@ -19,15 +19,25 @@ type cow struct {
 	Healthy bool
 }
 
-func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+type corsHandler struct{
+	handler func(http.ResponseWriter, *http.Request)
 }
+
+func (c corsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	c.handler(w, r)
+}
+
+func EnableCors(handler func(http.ResponseWriter, *http.Request)) corsHandler {
+	return corsHandler{handler}
+}
+
+
 
 // add new cow to database
 func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
-	enableCors(&w)
 
 	// handles preflight options request
 	if r.Method != http.MethodPost {
@@ -66,7 +76,6 @@ func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 // return all cows in database
 func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
-	enableCors(&w)
 
 	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
@@ -127,7 +136,6 @@ func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 // update cow func
 func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
-	enableCors(&w)
 
 	// handles preflight options request
 	if r.Method != http.MethodPut {
@@ -166,7 +174,6 @@ func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 // delete cow func
 func DeleteCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
-	enableCors(&w)
 
 	// handles preflight options request
 	if r.Method != http.MethodDelete {
