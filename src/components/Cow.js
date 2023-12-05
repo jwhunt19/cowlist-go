@@ -24,9 +24,9 @@ const Cow = ({ updateCow, deleteCow, cow }) => {
 
     const newCow = {
       Name: name.value,
-      Age: age.value,
+      Age: parseInt(age.value),
       Color: color.value,
-      Healthy: healthy.value,
+      Healthy: healthy.value === "true" ? true : false,
       Id: cow.Id,
     };
     updateCow(newCow);

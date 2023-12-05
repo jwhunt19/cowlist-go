@@ -20,9 +20,9 @@ const AddCow = ({ addCow }) => {
 
     const newCow = {
       Name: name.value,
-      Age: age.value,
+      Age: parseInt(age.value),
       Color: color.value,
-      Healthy: healthy.value,
+      Healthy: healthy.value === "true" ? true : false,
     };
     addCow(newCow);
     setAddingCow(false);

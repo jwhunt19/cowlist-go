@@ -56,58 +56,20 @@ func main() {
 	http.HandleFunc("/addcow", func(w http.ResponseWriter, r *http.Request) {
 		server.AddCow(w, r, conn)
 	})
+
 	http.HandleFunc("/getallcows", func(w http.ResponseWriter, r *http.Request) {
 		server.GetAllCows(w, r, conn)
 	})
+
 	http.HandleFunc("/updatecow", func(w http.ResponseWriter, r *http.Request) {
 		server.UpdateCow(w, r, conn)
 	})
+
 	http.HandleFunc("/deletecow/", func(w http.ResponseWriter, r *http.Request) {
 		server.DeleteCow(w, r, conn)
 	})
 
 	// listen on port 8080
 	http.ListenAndServe(":8080", nil)
-
-	/*
-		=========================
-		Test query - todo: delete
-		=========================
-	*/
-
-	rows, err := conn.Query(ctx, "select * from cows")
-	if err != nil {
-		fmt.Printf("Query error: %v", err)
-		return
-	}
-	defer rows.Close()
-
-	fmt.Println(rows)
-
-	// Iterate through the result set
-	for rows.Next() {
-		var name string
-		var age int
-		var color string
-		var healthy bool
-		var id int
-
-		err = rows.Scan(&id, &name, &age, &color, &healthy)
-		if err != nil {
-			fmt.Printf("Scan error: %v", err)
-			return
-		}
-
-		fmt.Println(name, age, color, healthy)
-	}
-
-	if rows.Err() != nil {
-		fmt.Printf("rows error: %v", rows.Err())
-		return
-	}
-
-	/*
-		Test query end
-	*/
 
 }

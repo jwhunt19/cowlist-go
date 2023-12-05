@@ -29,16 +29,22 @@ func enableCors(w *http.ResponseWriter) {
 func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	enableCors(&w)
 
-	// checks if request is expected method
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
+	// handles preflight options request
+	if r.Method != http.MethodPost {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		} else {
+			http.Error(w, "method not supported", http.StatusMethodNotAllowed)
+			return
+		}
 	}
 
-	// parses form, not really sure what that means
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Error parsing the form", http.StatusBadRequest)
+	// set data variable and decode request body
+	var data cow
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		msg := fmt.Sprintf("failed to decode request: %s", err.Error())
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -46,20 +52,16 @@ func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	// set values to variables
-	name := r.FormValue("Name")
-	age := r.FormValue("Age")
-	color := r.FormValue("Color")
-	healthy := r.FormValue("Healthy")
-
 	// create update query with variables
-	query := fmt.Sprintf("INSERT INTO cows (name, age, color, healthy) VALUES ('%s', %s, '%s', %s);", name, age, color, healthy)
+	query := "INSERT INTO cows (name, age, color, healthy) VALUES ($1, $2, $3, $4);"
 
 	// execute query
-	_, err = conn.Exec(ctx, query)
+	_, err := conn.Exec(ctx, query, data.Name, data.Age, data.Color, data.Healthy)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 // return all cows in database
@@ -127,16 +129,22 @@ func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	enableCors(&w)
 
-	// checks if request is expected method
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
+	// handles preflight options request
+	if r.Method != http.MethodPut {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		} else {
+			http.Error(w, "method not supported", http.StatusMethodNotAllowed)
+			return
+		}
 	}
 
-	// parses form, not really sure what that means
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Error parsing the form", http.StatusBadRequest)
+	// set data variable and decode request body
+	var data cow
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		msg := fmt.Sprintf("failed to decode request: %s", err.Error())
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -144,32 +152,31 @@ func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	// set values to variables
-	name := r.FormValue("Name")
-	age := r.FormValue("Age")
-	color := r.FormValue("Color")
-	healthy := r.FormValue("Healthy")
-	id := r.FormValue("Id")
+	// query to update cow
+	query := "UPDATE cows SET Name=$1, Age=$2, Color=$3, Healthy=$4 WHERE id=$5"
 
-	// create update query with variables
-	query := fmt.Sprintf("UPDATE cows SET Name='%s', Age='%s', Color='%s', Healthy='%s' WHERE id='%s'", name, age, color, healthy, id)
-
-	// execute query
-	_, err = conn.Exec(ctx, query)
+	// // execute query
+	_, err := conn.Exec(ctx, query, data.Name, data.Age, data.Color, data.Healthy, data.Id)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // delete cow func
 func DeleteCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	enableCors(&w)
 
-	// checks if request is expected method - for some reason it hits twice
-	// and this stops it
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
+	// handles preflight options request
+	if r.Method != http.MethodDelete {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		} else {
+			http.Error(w, "method not supported", http.StatusMethodNotAllowed)
+			return
+		}
 	}
 
 	// create context
@@ -181,12 +188,11 @@ func DeleteCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	lastSlash := strings.LastIndex(url, "/")
 	id := url[lastSlash+1:]
 
-	// write query
-	query := fmt.Sprintf("delete from cows where id = %s", id)
-
 	// execute query
-	_, err := conn.Exec(ctx, query)
+	_, err := conn.Exec(ctx, "delete from cows where id = $1", id)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
