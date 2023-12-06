@@ -19,6 +19,7 @@ type cow struct {
 	Healthy bool
 }
 
+// create cors enabling middleware
 type corsHandler struct{
 	handler func(http.ResponseWriter, *http.Request)
 }
@@ -34,13 +35,12 @@ func EnableCors(handler func(http.ResponseWriter, *http.Request)) corsHandler {
 	return corsHandler{handler}
 }
 
-
-
+// TODO: turn into method of a struct
 // add new cow to database
 func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 	// handles preflight options request
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodPost { // TODO: switch to && - if/else - repeat for other instances
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -57,6 +57,10 @@ func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
+	// TODO: - r.Body.Close() - need to close body to reset reader
+
+
+	// TODO: move db stuff to file
 
 	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
@@ -68,12 +72,13 @@ func AddCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	// execute query
 	_, err := conn.Exec(ctx, query, data.Name, data.Age, data.Color, data.Healthy)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Println("error:", err) // TODO: return error to client - http.Error ?
 	}
 
 	w.WriteHeader(http.StatusCreated)
 }
 
+// TODO: turn into method of a struct
 // return all cows in database
 func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
@@ -94,21 +99,17 @@ func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 	// interate over the rows returned by the query
 	for rows.Next() {
-		var id int
-		var name string
-		var age int
-		var color string
-		var healthy bool
+		var cow cow
 
 		// Set the variables to the corresponding values found in the row
-		err = rows.Scan(&id, &name, &age, &color, &healthy)
+		err = rows.Scan(&cow.Id, &cow.Name, &cow.Age, &cow.Color, &cow.Healthy)
 		if err != nil {
 			fmt.Printf("Scan error: %v", err)
 			return
 		}
 
 		// append this cow to the cows slice
-		cows = append(cows, cow{Id: id, Name: name, Age: age, Color: color, Healthy: healthy})
+		cows = append(cows, cow)
 	}
 
 	// handle any error from interating the rows?
@@ -134,11 +135,12 @@ func GetAllCows(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	}
 }
 
+// TODO: turn into method of a struct
 // update cow func
 func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
 	// handles preflight options request
-	if r.Method != http.MethodPut {
+	if r.Method != http.MethodPut { //TODO: 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -163,15 +165,16 @@ func UpdateCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	// query to update cow
 	query := "UPDATE cows SET Name=$1, Age=$2, Color=$3, Healthy=$4 WHERE id=$5"
 
-	// // execute query
+	// execute query
 	_, err := conn.Exec(ctx, query, data.Name, data.Age, data.Color, data.Healthy, data.Id)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Println("error:", err) // TODO: return error to client
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusAccepted)
 }
 
+// TODO: turn into method of a struct
 // delete cow func
 func DeleteCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 
@@ -195,11 +198,13 @@ func DeleteCow(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	lastSlash := strings.LastIndex(url, "/")
 	id := url[lastSlash+1:]
 
+	// TODO: handle edge cases (empty id, NaN)
+
 	// execute query
 	_, err := conn.Exec(ctx, "delete from cows where id = $1", id)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Println("error:", err) // TODO: return error to  client
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }

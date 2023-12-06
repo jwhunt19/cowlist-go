@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	// TODO: Move everything from here through line 55 to new database package
 	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
@@ -21,7 +23,7 @@ func main() {
 	fmt.Println(url)
 
 	// connect to database
-	conn, err := pgx.Connect(ctx, url) // todo - move to database directory
+	conn, err := pgx.Connect(ctx, url)
 	if err != nil {
 		panic(err)
 	}
@@ -52,9 +54,11 @@ func main() {
 		return
 	}
 
-	// handle routes - todo - move to server.go
+	// TODO: Move all http.Handle functions to a SetupRoutes func in server.go
+	// TODO: will no longer need to wrap the handler parameter in http.Handle
+	// handle routes
 	http.Handle("/addcow", server.EnableCors(func(w http.ResponseWriter, r *http.Request) {
-		server.AddCow(w, r, conn)
+		server.AddCow(w, r, conn) 
 	}))
 
 	http.Handle("/getallcows", server.EnableCors(func(w http.ResponseWriter, r *http.Request) {
@@ -69,6 +73,13 @@ func main() {
 		server.DeleteCow(w, r, conn)
 	}))
 
+	// TODO: find a way to initalize database via call in main
+	// TODO: call a func to setup routes from server.go
+
 	// listen on port 8080
-	http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			panic(err)
+		}
+	}
 }
